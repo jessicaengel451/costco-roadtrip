@@ -23,7 +23,6 @@
             appId: "1:753921320001:web:3cbae97fa4c6b69d2252c0"
         };
 
-    
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -833,6 +832,12 @@
             
             initMap();
         }
+
+        // Make functions globally accessible
+        window.showChecklist = showChecklist;
+        window.showMap = showMap;
+        window.toggleVisited = toggleVisited;
+        window.clearAllVisits = clearAllVisits;
 
         // Initialize map
         function initMap() {

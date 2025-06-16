@@ -1,0 +1,8 @@
+const firebaseConfig = {
+            apiKey: "AIzaSyC53vphWnk5MksOWysbzKKHXM5guILNzws",
+            authDomain: "costco-quest.firebaseapp.com",
+            projectId: "costco-quest",
+            storageBucket: "costco-quest.firebasestorage.app",
+            messagingSenderId: "753921320001",
+            appId: "1:753921320001:web:3cbae97fa4c6b69d2252c0"
+        };
