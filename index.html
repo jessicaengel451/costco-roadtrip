@@ -1,0 +1,560 @@
+        let costcoLocations = [];
+        
+        // Load Costco locations from CSV file
+        async function loadCostcoLocationsFromCSV() {
+            try {
+                const response = await fetch('./costco_locations.csv');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const csvText = await response.text();
+                
+                // Parse CSV data
+                const lines = csvText.trim().split('\n');
+                const locations = [];
+                
+                // State coordinate centers for mapping
+                const stateCoords = {
+                    'AK': [64.2008, -153.4937], 'AL': [32.3617, -86.7918], 'AR': [34.7465, -92.2896],
+                    'AZ': [33.7712, -111.3877], 'CA': [36.1162, -119.6816], 'CO': [39.0598, -105.3111],
+                    'CT': [41.5978, -72.7554], 'DC': [38.8974, -77.0365], 'DE': [39.3185, -75.5071],
+                    'FL': [27.7663, -81.6868], 'GA': [33.0406, -83.6431], 'HI': [21.0943, -157.4983],
+                    'IA': [42.0115, -93.2105], 'ID': [44.2405, -114.4788], 'IL': [40.3495, -88.9861],
+                    'IN': [39.8494, -86.2583], 'KS': [38.5266, -96.7265], 'KY': [37.6681, -84.6701],
+                    'LA': [31.1695, -91.8678], 'MA': [42.2352, -71.0275], 'MD': [39.0639, -76.8021],
+                    'ME': [44.6939, -69.3819], 'MI': [43.3266, -84.5361], 'MN': [45.7326, -93.9196],
+                    'MO': [38.4561, -92.2884], 'MS': [32.7364, -89.6678], 'MT': [47.0527, -110.2148],
+                    'NC': [35.6301, -79.8064], 'ND': [47.5289, -99.7840], 'NE': [41.1254, -98.2681],
+                    'NH': [43.4525, -71.5639], 'NJ': [40.3573, -74.4057], 'NM': [34.8405, -106.2485],
+                    'NV': [38.4199, -117.1219], 'NY': [42.1657, -74.9481], 'OH': [40.3888, -82.7649],
+                    'OK': [35.5653, -96.9289], 'OR': [44.5672, -122.1269], 'PA': [40.5908, -77.2098],
+                    'PR': [18.2208, -66.5901], 'SC': [33.8191, -80.9066], 'SD': [44.2998, -99.4388],
+                    'TN': [35.7478, -86.7923], 'TX': [31.0545, -97.5635], 'UT': [40.1135, -111.8535],
+                    'VA': [37.7693, -78.2057], 'VT': [44.0459, -72.7107], 'WA': [47.4009, -121.4905],
+                    'WI': [44.2685, -89.6165]
+                };
+                
+                // Process CSV lines (skip header row)
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line) {
+                        // Simple CSV parsing - handle commas in quoted fields
+                        const fields = [];
+                        let current = '';
+                        let inQuotes = false;
+                        
+                        for (let j = 0; j < line.length; j++) {
+                            const char = line[j];
+                            if (char === '"') {
+                                inQuotes = !inQuotes;
+                            } else if (char === ',' && !inQuotes) {
+                                fields.push(current);
+                                current = '';
+                            } else {
+                                current += char;
+                            }
+                        }
+                        fields.push(current); // Add the last field
+                        
+                        if (fields.length >= 5) {
+                            const storeName = fields[0].replace(/"/g, '');
+                            const address = fields[1].replace(/"/g, '');
+                            const city = fields[2].replace(/"/g, '');
+                            const state = fields[3].replace(/"/g, '');
+                            const zipcode = fields[4].replace(/"/g, '');
+                            
+                            const baseCoords = stateCoords[state] || [39.8283, -98.5795];
+                            // Add small random offset to spread locations within state
+                            const latOffset = (Math.random() - 0.5) * 1.5;
+                            const lngOffset = (Math.random() - 0.5) * 1.5;
+                            
+                            locations.push({
+                                id: i,
+                                name: `Costco Wholesale - ${storeName}`,
+                                address: `${address}, ${city}, ${state} ${zipcode}`,
+                                city: city,
+                                state: state,
+                                zipcode: zipcode,
+                                lat: baseCoords[0] + latOffset,
+                                lng: baseCoords[1] + lngOffset,
+                                visited: false
+                            });
+                        }
+                    }
+                }
+                
+                console.log(`Loaded ${locations.length} Costco locations from CSV`);
+                return locations;
+                
+            } catch (error) {
+                console.error('Error loading CSV file:', error);
+                // Fallback to a few sample locations if CSV fails to load
+                return [
+                    { id: 1, name: "Costco Wholesale - Sample Location 1", address: "123 Main St, Anytown, CA 90210", city: "Anytown", state: "CA", zipcode: "90210", lat: 36.1162, lng: -119.6816, visited: false },
+                    { id: 2, name: "Costco Wholesale - Sample Location 2", address: "456 Oak Ave, Somewhere, TX 75001", city: "Somewhere", state: "TX", zipcode: "75001", lat: 31.0545, lng: -97.5635, visited: false },
+                    { id: 3, name: "Costco Wholesale - Sample Location 3", address: "789 Pine St, Nowhere, NY 10001", city: "Nowhere", state: "NY", zipcode: "10001", lat: 42.1657, lng: -74.9481, visited: false }
+                ];
+            }
+        }7589, lng: -73.9441, visited: false },
+            { id: 72, name: "Costco Wholesale - Long Island", address: "3250 VERNON BLVD, LONG ISLAND CITY, NY 11106-4927", city: "LONG ISLAND CITY", state: "NY", zipcode: "11106-4927", lat: 40.7282, lng: -73.9399, visited: false },
+            { id: 73, name: "Costco Wholesale - Cleveland", address: "1409 GOLDEN GATE BLVD, CLEVELAND, OH 44124-1808", city: "CLEVELAND", state: "OH", zipcode: "44124-1808", lat: 41.4993, lng: -81.6944, visited: false },
+            { id: 74, name: "Costco Wholesale - Columbus", address: "1500 GEMINI PL, COLUMBUS, OH 43240-7002", city: "COLUMBUS", state: "OH", zipcode: "43240-7002", lat: 39.9612, lng: -82.9988, visited: false },
+            { id: 75, name: "Costco Wholesale - Cincinnati", address: "9691 WATERSTONE BLVD, CINCINNATI, OH 45249-8220", city: "CINCINNATI", state: "OH", zipcode: "45249-8220", lat: 39.1031, lng: -84.5120, visited: false },
+            { id: 76, name: "Costco Wholesale - Oklahoma City", address: "13200 N WESTERN AVE, OKLAHOMA CITY, OK 73114", city: "OKLAHOMA CITY", state: "OK", zipcode: "73114<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Costco Location Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: #e31837;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .auth-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .google-signin-btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .google-signin-btn:hover {
+            background: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(66, 133, 244, 0.4);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .signout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .signout-btn:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .sync-status {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .sync-success {
+            color: #28a745;
+        }
+
+        .sync-error {
+            color: #dc3545;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e31837;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .view-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .toggle-btn {
+            background: #f0f0f0;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(45deg, #e31837, #ff4757);
+            color: white;
+        }
+
+        .search-filter {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 1rem;
+            width: 300px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #e31837;
+            box-shadow: 0 0 0 3px rgba(227, 24, 55, 0.1);
+        }
+
+        .filter-select {
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #e31837;
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            min-height: 600px;
+        }
+
+        .checklist-view {
+            padding: 30px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .location-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .location-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .location-item.visited {
+            background: linear-gradient(45deg, #e8f5e8, #d4edda);
+            border-left: 4px solid #28a745;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            cursor: pointer;
+            transform: scale(1.2);
+        }
+
+        .location-info {
+            flex: 1;
+        }
+
+        .location-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .location-address {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .clear-btn {
+            background: linear-gradient(45deg, #ff4757, #ff3742);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+        }
+
+        .setup-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+
+        .setup-notice h3 {
+            margin-bottom: 10px;
+            color: #856404;
+        }
+
+        .setup-notice code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .search-filter {
+                flex-direction: column;
+            }
+            
+            .search-input {
+                width: 100%;
+            }
+
+            .user-info {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="setup-notice">
+            <h3>🔧 Setup Required for Google Drive Sync</h3>
+            <p>To enable Google Drive sync, you'll need to:</p>
+            <ol>
+                <li>Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+                <li>Create a new project or select existing one</li>
+                <li>Enable the Google Drive API</li>
+                <li>Create credentials (OAuth 2.0 client ID for Web application)</li>
+                <li>Add your domain to authorized origins</li>
+                <li>Replace <code>YOUR_GOOGLE_CLIENT_ID</code> in the code with your actual client ID</li>
+            </ol>
+            <p><strong>Until setup is complete, data will be stored locally in your browser.</strong></p>
+        </div>
+
+        <div class="header">
+            <h1>🏪 Costco Location Tracker</h1>
+            <p class="subtitle">Track your visits to Costco locations across the country</p>
+            
+            <div class="auth-section">
+                <div id="signedOut" class="hidden">
+                    <button class="google-signin-btn" onclick="signIn()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        Sign in with Google to sync data
+                    </button>
+                    <div class="sync-status">Data will be stored locally until you sign in</div>
+                </div>
+                
+                <div id="signedIn" class="hidden">
+                    <div class="user-info">
+                        <img id="userPhoto" class="user-avatar" src="" alt="User">
+                        <span id="userName"></span>
+                        <button class="signout-btn" onclick="signOut()">Sign Out</button>
+                    </div>
+                    <div id="syncStatus" class="sync-status">Ready to sync</div>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-number" id="visitedCount">0</div>
+                    <div class="stat-label">Visited</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="totalCount">0</div>
+                    <div class="stat-label">Total Locations</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="percentage">0%</div>
+                    <div class="stat-label">Completion</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="view-toggle">
+                <button class="toggle-btn active" onclick="showChecklist()">📋 Checklist View</button>
+                <button class="toggle-btn" onclick="showMap()">🗺️ Map View</button>
+            </div>
+            <div class="search-filter">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search locations...">
+                <select class="filter-select" id="stateFilter">
+                    <option value="">All States</option>
+                </select>
+                <select class="filter-select" id="statusFilter">
+                    <option value="">All Locations</option>
+                    <option value="visited">Visited Only</option>
+                    <option value="unvisited">Unvisited Only</option>
+                </select>
+                <button class="clear-btn" onclick="clearAllVisits()">Clear All Visits</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div id="checklistView" class="checklist-view">
+                <!-- Locations will be populated here -->
+            </div>
+            <div id="mapView" class="hidden">
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Google API Configuration
+        const CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // Replace with your actual client ID
+        const API_KEY = 'YOUR_GOOGLE_API_KEY'; // Replace with your actual API key
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        const DATA_FILE_NAME = 'costco-tracker-data.json';
+
+        let gapi;
+        let tokenClient;
+        let isSignedIn = false;
+        let driveFileId = null;
