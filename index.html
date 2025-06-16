@@ -389,26 +389,31 @@
             }
         }
 
-        // Get coordinates from zip code using a free geocoding service
-        async function getCoordinatesFromZip(zipcode) {
+        // Load coordinate lookup table
+        async function loadCoordinates() {
             try {
-                // Use a free geocoding service (Nominatim OpenStreetMap)
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=us&postalcode=${zipcode}&limit=1`);
-                const data = await response.json();
-                
-                if (data && data.length > 0) {
-                    return {
-                        lat: parseFloat(data[0].lat),
-                        lng: parseFloat(data[0].lon)
-                    };
-                }
+                const response = await fetch('./costco_coordinates.json');
+                addressCoordinates = await response.json();
+                console.log('Loaded coordinates for', Object.keys(addressCoordinates).length, 'addresses');
             } catch (error) {
-                console.warn(`Could not geocode zip ${zipcode}:`, error);
+            console.error('Could not load coordinates file:', error);
             }
-            
-            // Fallback to center of US if geocoding fails
-            return { lat: 39.8283, lng: -98.5795 };
         }
+
+// Get coordinates from full address
+function getCoordinatesFromAddress(address, city, state, zipcode) {
+    // Create the full address key to match your JSON
+    const fullAddress = `${address}, ${city}, ${state} ${zipcode}`;
+    
+    const coords = getCoordinatesFromAddress(address, city, state, zipcode);
+    if (coords) {
+        return coords;
+    }
+    
+    // Fallback if address not found
+    console.warn(`No coordinates found for: ${fullAddress}`);
+    return { lat: 39.8283, lng: -98.5795 }; // Center of US fallback
+}
 
         // Load visited status from localStorage
         function loadVisitedStatus() {
@@ -608,8 +613,8 @@
 
         // Initialize the app
         async function init() {
+            await loadCoordinates(); // Add this line
             costcoLocations = await loadLocationsFromCSV();
-            filteredLocations = [...costcoLocations];
             
             loadVisitedStatus();
             populateStateFilter();
