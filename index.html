@@ -1,114 +1,11 @@
-        let costcoLocations = [];
-        
-        // Load Costco locations from CSV file
-        async function loadCostcoLocationsFromCSV() {
-            try {
-                const response = await fetch('./costco_locations.csv');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const csvText = await response.text();
-                
-                // Parse CSV data
-                const lines = csvText.trim().split('\n');
-                const locations = [];
-                
-                // State coordinate centers for mapping
-                const stateCoords = {
-                    'AK': [64.2008, -153.4937], 'AL': [32.3617, -86.7918], 'AR': [34.7465, -92.2896],
-                    'AZ': [33.7712, -111.3877], 'CA': [36.1162, -119.6816], 'CO': [39.0598, -105.3111],
-                    'CT': [41.5978, -72.7554], 'DC': [38.8974, -77.0365], 'DE': [39.3185, -75.5071],
-                    'FL': [27.7663, -81.6868], 'GA': [33.0406, -83.6431], 'HI': [21.0943, -157.4983],
-                    'IA': [42.0115, -93.2105], 'ID': [44.2405, -114.4788], 'IL': [40.3495, -88.9861],
-                    'IN': [39.8494, -86.2583], 'KS': [38.5266, -96.7265], 'KY': [37.6681, -84.6701],
-                    'LA': [31.1695, -91.8678], 'MA': [42.2352, -71.0275], 'MD': [39.0639, -76.8021],
-                    'ME': [44.6939, -69.3819], 'MI': [43.3266, -84.5361], 'MN': [45.7326, -93.9196],
-                    'MO': [38.4561, -92.2884], 'MS': [32.7364, -89.6678], 'MT': [47.0527, -110.2148],
-                    'NC': [35.6301, -79.8064], 'ND': [47.5289, -99.7840], 'NE': [41.1254, -98.2681],
-                    'NH': [43.4525, -71.5639], 'NJ': [40.3573, -74.4057], 'NM': [34.8405, -106.2485],
-                    'NV': [38.4199, -117.1219], 'NY': [42.1657, -74.9481], 'OH': [40.3888, -82.7649],
-                    'OK': [35.5653, -96.9289], 'OR': [44.5672, -122.1269], 'PA': [40.5908, -77.2098],
-                    'PR': [18.2208, -66.5901], 'SC': [33.8191, -80.9066], 'SD': [44.2998, -99.4388],
-                    'TN': [35.7478, -86.7923], 'TX': [31.0545, -97.5635], 'UT': [40.1135, -111.8535],
-                    'VA': [37.7693, -78.2057], 'VT': [44.0459, -72.7107], 'WA': [47.4009, -121.4905],
-                    'WI': [44.2685, -89.6165]
-                };
-                
-                // Process CSV lines (skip header row)
-                for (let i = 1; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (line) {
-                        // Simple CSV parsing - handle commas in quoted fields
-                        const fields = [];
-                        let current = '';
-                        let inQuotes = false;
-                        
-                        for (let j = 0; j < line.length; j++) {
-                            const char = line[j];
-                            if (char === '"') {
-                                inQuotes = !inQuotes;
-                            } else if (char === ',' && !inQuotes) {
-                                fields.push(current);
-                                current = '';
-                            } else {
-                                current += char;
-                            }
-                        }
-                        fields.push(current); // Add the last field
-                        
-                        if (fields.length >= 5) {
-                            const storeName = fields[0].replace(/"/g, '');
-                            const address = fields[1].replace(/"/g, '');
-                            const city = fields[2].replace(/"/g, '');
-                            const state = fields[3].replace(/"/g, '');
-                            const zipcode = fields[4].replace(/"/g, '');
-                            
-                            const baseCoords = stateCoords[state] || [39.8283, -98.5795];
-                            // Add small random offset to spread locations within state
-                            const latOffset = (Math.random() - 0.5) * 1.5;
-                            const lngOffset = (Math.random() - 0.5) * 1.5;
-                            
-                            locations.push({
-                                id: i,
-                                name: `Costco Wholesale - ${storeName}`,
-                                address: `${address}, ${city}, ${state} ${zipcode}`,
-                                city: city,
-                                state: state,
-                                zipcode: zipcode,
-                                lat: baseCoords[0] + latOffset,
-                                lng: baseCoords[1] + lngOffset,
-                                visited: false
-                            });
-                        }
-                    }
-                }
-                
-                console.log(`Loaded ${locations.length} Costco locations from CSV`);
-                return locations;
-                
-            } catch (error) {
-                console.error('Error loading CSV file:', error);
-                // Fallback to a few sample locations if CSV fails to load
-                return [
-                    { id: 1, name: "Costco Wholesale - Sample Location 1", address: "123 Main St, Anytown, CA 90210", city: "Anytown", state: "CA", zipcode: "90210", lat: 36.1162, lng: -119.6816, visited: false },
-                    { id: 2, name: "Costco Wholesale - Sample Location 2", address: "456 Oak Ave, Somewhere, TX 75001", city: "Somewhere", state: "TX", zipcode: "75001", lat: 31.0545, lng: -97.5635, visited: false },
-                    { id: 3, name: "Costco Wholesale - Sample Location 3", address: "789 Pine St, Nowhere, NY 10001", city: "Nowhere", state: "NY", zipcode: "10001", lat: 42.1657, lng: -74.9481, visited: false }
-                ];
-            }
-        }7589, lng: -73.9441, visited: false },
-            { id: 72, name: "Costco Wholesale - Long Island", address: "3250 VERNON BLVD, LONG ISLAND CITY, NY 11106-4927", city: "LONG ISLAND CITY", state: "NY", zipcode: "11106-4927", lat: 40.7282, lng: -73.9399, visited: false },
-            { id: 73, name: "Costco Wholesale - Cleveland", address: "1409 GOLDEN GATE BLVD, CLEVELAND, OH 44124-1808", city: "CLEVELAND", state: "OH", zipcode: "44124-1808", lat: 41.4993, lng: -81.6944, visited: false },
-            { id: 74, name: "Costco Wholesale - Columbus", address: "1500 GEMINI PL, COLUMBUS, OH 43240-7002", city: "COLUMBUS", state: "OH", zipcode: "43240-7002", lat: 39.9612, lng: -82.9988, visited: false },
-            { id: 75, name: "Costco Wholesale - Cincinnati", address: "9691 WATERSTONE BLVD, CINCINNATI, OH 45249-8220", city: "CINCINNATI", state: "OH", zipcode: "45249-8220", lat: 39.1031, lng: -84.5120, visited: false },
-            { id: 76, name: "Costco Wholesale - Oklahoma City", address: "13200 N WESTERN AVE, OKLAHOMA CITY, OK 73114", city: "OKLAHOMA CITY", state: "OK", zipcode: "73114<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Costco Location Tracker</title>
+    <title>CostcoQuest - Location Tracker</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://apis.google.com/js/api.js"></script>
     <style>
         * {
             margin: 0;
@@ -150,81 +47,7 @@
         .subtitle {
             color: #666;
             font-size: 1.1rem;
-        }
-
-        .auth-section {
-            margin: 20px 0;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            backdrop-filter: blur(5px);
-        }
-
-        .google-signin-btn {
-            background: #4285f4;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-
-        .google-signin-btn:hover {
-            background: #3367d6;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(66, 133, 244, 0.4);
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid white;
-        }
-
-        .signout-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-
-        .signout-btn:hover {
-            background: #c82333;
-            transform: translateY(-1px);
-        }
-
-        .sync-status {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 10px;
-        }
-
-        .sync-success {
-            color: #28a745;
-        }
-
-        .sync-error {
-            color: #dc3545;
+            margin-bottom: 20px;
         }
 
         .stats {
@@ -273,8 +96,6 @@
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
         }
 
         .toggle-btn:hover {
@@ -408,25 +229,27 @@
             box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
         }
 
-        .setup-notice {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            color: #856404;
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
         }
 
-        .setup-notice h3 {
-            margin-bottom: 10px;
-            color: #856404;
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ddd;
+            border-top: 3px solid #e31837;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
         }
 
-        .setup-notice code {
-            background: #f8f9fa;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         @media (max-width: 768px) {
@@ -450,57 +273,15 @@
             .search-input {
                 width: 100%;
             }
-
-            .user-info {
-                flex-direction: column;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="setup-notice">
-            <h3>🔧 Setup Required for Google Drive Sync</h3>
-            <p>To enable Google Drive sync, you'll need to:</p>
-            <ol>
-                <li>Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
-                <li>Create a new project or select existing one</li>
-                <li>Enable the Google Drive API</li>
-                <li>Create credentials (OAuth 2.0 client ID for Web application)</li>
-                <li>Add your domain to authorized origins</li>
-                <li>Replace <code>YOUR_GOOGLE_CLIENT_ID</code> in the code with your actual client ID</li>
-            </ol>
-            <p><strong>Until setup is complete, data will be stored locally in your browser.</strong></p>
-        </div>
-
         <div class="header">
-            <h1>🏪 Costco Location Tracker</h1>
+            <h1>🏪 CostcoQuest</h1>
             <p class="subtitle">Track your visits to Costco locations across the country</p>
             
-            <div class="auth-section">
-                <div id="signedOut" class="hidden">
-                    <button class="google-signin-btn" onclick="signIn()">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                        </svg>
-                        Sign in with Google to sync data
-                    </button>
-                    <div class="sync-status">Data will be stored locally until you sign in</div>
-                </div>
-                
-                <div id="signedIn" class="hidden">
-                    <div class="user-info">
-                        <img id="userPhoto" class="user-avatar" src="" alt="User">
-                        <span id="userName"></span>
-                        <button class="signout-btn" onclick="signOut()">Sign Out</button>
-                    </div>
-                    <div id="syncStatus" class="sync-status">Ready to sync</div>
-                </div>
-            </div>
-
             <div class="stats">
                 <div class="stat-item">
                     <div class="stat-number" id="visitedCount">0</div>
@@ -538,7 +319,7 @@
 
         <div class="content">
             <div id="checklistView" class="checklist-view">
-                <!-- Locations will be populated here -->
+                <div class="loading">Loading Costco locations...</div>
             </div>
             <div id="mapView" class="hidden">
                 <div id="map"></div>
@@ -547,14 +328,300 @@
     </div>
 
     <script>
-        // Google API Configuration
-        const CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // Replace with your actual client ID
-        const API_KEY = 'YOUR_GOOGLE_API_KEY'; // Replace with your actual API key
-        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-        const DATA_FILE_NAME = 'costco-tracker-data.json';
+        // Global variables
+        let costcoLocations = [];
+        let filteredLocations = [];
+        let map;
+        let markers = [];
+        let currentView = 'checklist';
 
-        let gapi;
-        let tokenClient;
-        let isSignedIn = false;
-        let driveFileId = null;
+        // Load locations from CSV file
+        async function loadLocationsFromCSV() {
+            try {
+                const response = await fetch('./costco_locations.csv');
+                if (!response.ok) {
+                    throw new Error(`Failed to load CSV: ${response.status}`);
+                }
+                
+                const csvText = await response.text();
+                const lines = csvText.trim().split('\n');
+                const locations = [];
+
+                // State coordinates for mapping
+                const stateCoords = {
+                    'AK': [64.2008, -153.4937], 'AL': [32.3617, -86.7918], 'AR': [34.7465, -92.2896],
+                    'AZ': [33.7712, -111.3877], 'CA': [36.1162, -119.6816], 'CO': [39.0598, -105.3111],
+                    'CT': [41.5978, -72.7554], 'DC': [38.8974, -77.0365], 'DE': [39.3185, -75.5071],
+                    'FL': [27.7663, -81.6868], 'GA': [33.0406, -83.6431], 'HI': [21.0943, -157.4983],
+                    'IA': [42.0115, -93.2105], 'ID': [44.2405, -114.4788], 'IL': [40.3495, -88.9861],
+                    'IN': [39.8494, -86.2583], 'KS': [38.5266, -96.7265], 'KY': [37.6681, -84.6701],
+                    'LA': [31.1695, -91.8678], 'MA': [42.2352, -71.0275], 'MD': [39.0639, -76.8021],
+                    'ME': [44.6939, -69.3819], 'MI': [43.3266, -84.5361], 'MN': [45.7326, -93.9196],
+                    'MO': [38.4561, -92.2884], 'MS': [32.7364, -89.6678], 'MT': [47.0527, -110.2148],
+                    'NC': [35.6301, -79.8064], 'ND': [47.5289, -99.7840], 'NE': [41.1254, -98.2681],
+                    'NH': [43.4525, -71.5639], 'NJ': [40.3573, -74.4057], 'NM': [34.8405, -106.2485],
+                    'NV': [38.4199, -117.1219], 'NY': [42.1657, -74.9481], 'OH': [40.3888, -82.7649],
+                    'OK': [35.5653, -96.9289], 'OR': [44.5672, -122.1269], 'PA': [40.5908, -77.2098],
+                    'PR': [18.2208, -66.5901], 'SC': [33.8191, -80.9066], 'SD': [44.2998, -99.4388],
+                    'TN': [35.7478, -86.7923], 'TX': [31.0545, -97.5635], 'UT': [40.1135, -111.8535],
+                    'VA': [37.7693, -78.2057], 'VT': [44.0459, -72.7107], 'WA': [47.4009, -121.4905],
+                    'WI': [44.2685, -89.6165]
+                };
+
+                // Parse CSV (skip header row)
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+
+                    const parts = line.split(',');
+                    if (parts.length >= 5) {
+                        const storeName = parts[0];
+                        const address = parts[1];
+                        const city = parts[2];
+                        const state = parts[3];
+                        const zipcode = parts[4];
+
+                        // Get base coordinates and add small random offset
+                        const baseCoords = stateCoords[state] || [39.8283, -98.5795];
+                        const lat = baseCoords[0] + (Math.random() - 0.5) * 1.5;
+                        const lng = baseCoords[1] + (Math.random() - 0.5) * 1.5;
+
+                        locations.push({
+                            id: i,
+                            name: `Costco Wholesale - ${storeName}`,
+                            address: `${address}, ${city}, ${state} ${zipcode}`,
+                            city: city,
+                            state: state,
+                            zipcode: zipcode,
+                            lat: lat,
+                            lng: lng,
+                            visited: false
+                        });
+                    }
+                }
+
+                console.log(`Loaded ${locations.length} locations from CSV`);
+                return locations;
+
+            } catch (error) {
+                console.error('Error loading CSV:', error);
+                // Fallback sample data
+                return [
+                    { id: 1, name: "Costco Wholesale - Sample Location", address: "123 Main St, Sample City, CA 90210", city: "Sample City", state: "CA", zipcode: "90210", lat: 36.1162, lng: -119.6816, visited: false }
+                ];
+            }
+        }
+
+        // Load visited status from localStorage
+        function loadVisitedStatus() {
+            const saved = localStorage.getItem('costcoVisits');
+            if (saved) {
+                const visitedIds = JSON.parse(saved);
+                costcoLocations.forEach(location => {
+                    location.visited = visitedIds.includes(location.id);
+                });
+            }
+        }
+
+        // Save visited status to localStorage
+        function saveVisitedStatus() {
+            const visitedIds = costcoLocations.filter(loc => loc.visited).map(loc => loc.id);
+            localStorage.setItem('costcoVisits', JSON.stringify(visitedIds));
+            updateStats();
+        }
+
+        // Populate state filter
+        function populateStateFilter() {
+            const states = [...new Set(costcoLocations.map(loc => loc.state))].sort();
+            const stateFilter = document.getElementById('stateFilter');
+            stateFilter.innerHTML = '<option value="">All States</option>';
+            
+            states.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state;
+                option.textContent = state;
+                stateFilter.appendChild(option);
+            });
+        }
+
+        // Filter locations
+        function filterLocations() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const stateFilter = document.getElementById('stateFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            filteredLocations = costcoLocations.filter(location => {
+                const matchesSearch = location.name.toLowerCase().includes(searchTerm) || 
+                                    location.address.toLowerCase().includes(searchTerm);
+                const matchesState = !stateFilter || location.state === stateFilter;
+                const matchesStatus = !statusFilter || 
+                                    (statusFilter === 'visited' && location.visited) ||
+                                    (statusFilter === 'unvisited' && !location.visited);
+
+                return matchesSearch && matchesState && matchesStatus;
+            });
+
+            if (currentView === 'checklist') {
+                renderChecklist();
+            } else {
+                updateMapMarkers();
+            }
+        }
+
+        // Render checklist view
+        function renderChecklist() {
+            const container = document.getElementById('checklistView');
+            
+            if (filteredLocations.length === 0) {
+                container.innerHTML = '<div class="loading">No locations found</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            filteredLocations.forEach(location => {
+                const item = document.createElement('div');
+                item.className = `location-item ${location.visited ? 'visited' : ''}`;
+                
+                item.innerHTML = `
+                    <input type="checkbox" class="checkbox" ${location.visited ? 'checked' : ''} 
+                           onchange="toggleVisited(${location.id})">
+                    <div class="location-info">
+                        <div class="location-name">${location.name}</div>
+                        <div class="location-address">${location.address}</div>
+                    </div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+
+        // Toggle visited status
+        function toggleVisited(locationId) {
+            const location = costcoLocations.find(loc => loc.id === locationId);
+            if (location) {
+                location.visited = !location.visited;
+                saveVisitedStatus();
+                renderChecklist();
+                if (currentView === 'map') {
+                    updateMapMarkers();
+                }
+            }
+        }
+
+        // Clear all visits
+        function clearAllVisits() {
+            costcoLocations.forEach(location => {
+                location.visited = false;
+            });
+            saveVisitedStatus();
+            renderChecklist();
+            if (currentView === 'map') {
+                updateMapMarkers();
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            const visitedCount = costcoLocations.filter(loc => loc.visited).length;
+            const totalCount = costcoLocations.length;
+            const percentage = totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0;
+
+            document.getElementById('visitedCount').textContent = visitedCount;
+            document.getElementById('totalCount').textContent = totalCount;
+            document.getElementById('percentage').textContent = percentage + '%';
+        }
+
+        // Show checklist view
+        function showChecklist() {
+            currentView = 'checklist';
+            document.getElementById('checklistView').classList.remove('hidden');
+            document.getElementById('mapView').classList.add('hidden');
+            
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            renderChecklist();
+        }
+
+        // Show map view
+        function showMap() {
+            currentView = 'map';
+            document.getElementById('checklistView').classList.add('hidden');
+            document.getElementById('mapView').classList.remove('hidden');
+            
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            initMap();
+        }
+
+        // Initialize map
+        function initMap() {
+            if (!map) {
+                map = L.map('map').setView([39.8283, -98.5795], 4);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+            }
+            
+            updateMapMarkers();
+        }
+
+        // Update map markers
+        function updateMapMarkers() {
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            filteredLocations.forEach(location => {
+                const icon = L.divIcon({
+                    className: 'custom-marker',
+                    html: location.visited ? 
+                        '<div style="background: #28a745; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>' :
+                        '<div style="background: #dc3545; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+                    iconSize: [26, 26],
+                    iconAnchor: [13, 13]
+                });
+
+                const marker = L.marker([location.lat, location.lng], { icon })
+                    .addTo(map)
+                    .bindPopup(`
+                        <div style="min-width: 200px;">
+                            <h4 style="margin: 0 0 8px 0; color: #e31837;">${location.name}</h4>
+                            <p style="margin: 0 0 8px 0; font-size: 0.9rem;">${location.address}</p>
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" ${location.visited ? 'checked' : ''} 
+                                       onchange="toggleVisited(${location.id})" style="margin-right: 8px;">
+                                <span style="font-weight: 600;">${location.visited ? 'Visited' : 'Mark as visited'}</span>
+                            </label>
+                        </div>
+                    `);
+
+                markers.push(marker);
+            });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', filterLocations);
+            document.getElementById('stateFilter').addEventListener('change', filterLocations);
+            document.getElementById('statusFilter').addEventListener('change', filterLocations);
+        }
+
+        // Initialize the app
+        async function init() {
+            costcoLocations = await loadLocationsFromCSV();
+            filteredLocations = [...costcoLocations];
+            
+            loadVisitedStatus();
+            populateStateFilter();
+            renderChecklist();
+            updateStats();
+            setupEventListeners();
+        }
+
+        // Start the app when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
