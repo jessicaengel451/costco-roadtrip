@@ -13,7 +13,6 @@
         import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         // 🔥 REPLACE THIS WITH YOUR CONFIG FROM FIREBASE CONSOLE 🔥
-        // Interestingly enough , the Firebase config is not sensitive information and can be safely included in your public code.
         const firebaseConfig = {
             apiKey: "AIzaSyC53vphWnk5MksOWysbzKKHXM5guILNzws",
             authDomain: "costco-quest.firebaseapp.com",
@@ -113,8 +112,6 @@
                 // Update UI
                 document.getElementById('auth-section').style.display = 'block';
                 document.getElementById('user-info').style.display = 'none';
-                
-                // Still allow local functionality when signed out
             }
         });
 
@@ -123,7 +120,7 @@
             if (!currentUser) return;
             
             // Get data from Firestore
-            const firestoreVisits = await loadVisitedFromFirestore();
+            const firestoreVisits = await window.loadVisitedFromFirestore();
             
             // Get data from localStorage
             const localVisits = JSON.parse(localStorage.getItem('costcoVisits') || '[]');
@@ -132,14 +129,14 @@
             const mergedVisits = [...new Set([...firestoreVisits, ...localVisits])];
             
             // Update costcoLocations with merged data
-            if (window.costcoLocations && costcoLocations.length > 0) {
-                costcoLocations.forEach(location => {
+            if (window.costcoLocations && window.costcoLocations.length > 0) {
+                window.costcoLocations.forEach(location => {
                     location.visited = mergedVisits.includes(location.id);
                 });
                 
                 // Save merged data back to both places
                 localStorage.setItem('costcoVisits', JSON.stringify(mergedVisits));
-                await saveVisitedToFirestore(mergedVisits);
+                await window.saveVisitedToFirestore(mergedVisits);
                 
                 // Update UI
                 window.updateStats();
@@ -765,9 +762,6 @@
             });
         }
 
-        // Make renderChecklist globally accessible
-        window.renderChecklist = renderChecklist;
-
         // Toggle visited status
         async function toggleVisited(locationId) {
             const location = costcoLocations.find(loc => loc.id === locationId);
@@ -804,9 +798,6 @@
             document.getElementById('percentage').textContent = percentage + '%';
         }
 
-        // Make updateStats globally accessible
-        window.updateStats = updateStats;
-
         // Show checklist view
         function showChecklist() {
             currentView = 'checklist';
@@ -814,8 +805,9 @@
             document.getElementById('checklistView').classList.remove('hidden');
             document.getElementById('mapView').classList.add('hidden');
             
+            // Update button states
             document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            document.querySelectorAll('.toggle-btn')[0].classList.add('active'); // First button (checklist)
             
             renderChecklist();
         }
@@ -827,17 +819,12 @@
             document.getElementById('checklistView').classList.add('hidden');
             document.getElementById('mapView').classList.remove('hidden');
             
+            // Update button states
             document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            document.querySelectorAll('.toggle-btn')[1].classList.add('active'); // Second button (map)
             
             initMap();
         }
-
-        // Make functions globally accessible
-        window.showChecklist = showChecklist;
-        window.showMap = showMap;
-        window.toggleVisited = toggleVisited;
-        window.clearAllVisits = clearAllVisits;
 
         // Initialize map
         function initMap() {
@@ -885,7 +872,9 @@
             });
         }
 
-        // Make updateMapMarkers globally accessible
+        // Make functions globally accessible
+        window.renderChecklist = renderChecklist;
+        window.updateStats = updateStats;
         window.updateMapMarkers = updateMapMarkers;
 
         // Setup event listeners
@@ -911,3 +900,6 @@
 
         // Start the app when page loads
         document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
