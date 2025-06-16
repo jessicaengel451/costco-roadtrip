@@ -6,6 +6,152 @@
     <title>CostcoQuest - Location Tracker</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // 🔥 REPLACE THIS WITH YOUR CONFIG FROM FIREBASE CONSOLE 🔥
+        // Interestingly enough , the Firebase config is not sensitive information and can be safely included in your public code.
+        const firebaseConfig = {
+            apiKey: "AIzaSyC53vphWnk5MksOWysbzKKHXM5guILNzws",
+            authDomain: "costco-quest.firebaseapp.com",
+            projectId: "costco-quest",
+            storageBucket: "costco-quest.firebasestorage.app",
+            messagingSenderId: "753921320001",
+            appId: "1:753921320001:web:3cbae97fa4c6b69d2252c0"
+        };
+
+    
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        // Global variables for Firebase
+        let currentUser = null;
+
+        // Make Firebase functions globally available
+        window.signInWithGoogle = async function() {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                console.log('User signed in:', result.user.displayName);
+            } catch (error) {
+                console.error('Error signing in:', error);
+                alert('Error signing in: ' + error.message);
+            }
+        };
+
+        window.signOutUser = async function() {
+            try {
+                await signOut(auth);
+                console.log('User signed out');
+            } catch (error) {
+                console.error('Error signing out:', error);
+            }
+        };
+
+        // Save visited locations to Firestore
+        window.saveVisitedToFirestore = async function(visitedIds) {
+            if (!currentUser) return;
+            
+            try {
+                await setDoc(doc(db, `users/${currentUser.uid}/data`, 'visits'), {
+                    visitedLocations: visitedIds,
+                    lastUpdated: new Date().toISOString()
+                });
+                console.log('Visits saved to Firestore');
+            } catch (error) {
+                console.error('Error saving to Firestore:', error);
+            }
+        };
+
+        // Load visited locations from Firestore
+        window.loadVisitedFromFirestore = async function() {
+            if (!currentUser) return [];
+            
+            try {
+                const docRef = doc(db, `users/${currentUser.uid}/data`, 'visits');
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    console.log('Loaded visits from Firestore:', data.visitedLocations);
+                    return data.visitedLocations || [];
+                } else {
+                    console.log('No visits found in Firestore');
+                    return [];
+                }
+            } catch (error) {
+                console.error('Error loading from Firestore:', error);
+                return [];
+            }
+        };
+
+        // Auth state observer
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is signed in
+                currentUser = user;
+                console.log('User signed in:', user.displayName);
+                
+                // Update UI
+                document.getElementById('auth-section').style.display = 'none';
+                document.getElementById('user-info').style.display = 'block';
+                document.getElementById('user-name').textContent = user.displayName;
+                document.getElementById('user-email').textContent = user.email;
+                
+                // Load user's data from Firestore and merge with localStorage
+                await loadUserData();
+                
+            } else {
+                // User is signed out
+                currentUser = null;
+                console.log('User signed out');
+                
+                // Update UI
+                document.getElementById('auth-section').style.display = 'block';
+                document.getElementById('user-info').style.display = 'none';
+                
+                // Still allow local functionality when signed out
+            }
+        });
+
+        // Load user data and merge with localStorage
+        window.loadUserData = async function() {
+            if (!currentUser) return;
+            
+            // Get data from Firestore
+            const firestoreVisits = await loadVisitedFromFirestore();
+            
+            // Get data from localStorage
+            const localVisits = JSON.parse(localStorage.getItem('costcoVisits') || '[]');
+            
+            // Merge the data (union of both sets)
+            const mergedVisits = [...new Set([...firestoreVisits, ...localVisits])];
+            
+            // Update costcoLocations with merged data
+            if (window.costcoLocations && costcoLocations.length > 0) {
+                costcoLocations.forEach(location => {
+                    location.visited = mergedVisits.includes(location.id);
+                });
+                
+                // Save merged data back to both places
+                localStorage.setItem('costcoVisits', JSON.stringify(mergedVisits));
+                await saveVisitedToFirestore(mergedVisits);
+                
+                // Update UI
+                window.updateStats();
+                if (window.currentView === 'checklist') {
+                    window.renderChecklist();
+                } else {
+                    window.updateMapMarkers();
+                }
+            }
+        };
+    </script>
     <style>
         * {
             margin: 0;
@@ -48,6 +194,66 @@
             color: #666;
             font-size: 1.1rem;
             margin-bottom: 20px;
+        }
+
+        .auth-section {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #4285f4;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .google-signin-btn {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .google-signin-btn:hover {
+            background-color: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(66, 133, 244, 0.4);
+        }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #28a745;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+            display: none;
+        }
+
+        .user-info h3 {
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+
+        .signout-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .signout-btn:hover {
+            background-color: #c82333;
+            transform: translateY(-1px);
         }
 
         .stats {
@@ -282,6 +488,29 @@
             <h1>🏪 CostcoQuest</h1>
             <p class="subtitle">Track your visits to Costco locations across the country</p>
             
+            <!-- Authentication Section -->
+            <div id="auth-section" class="auth-section">
+                <h3>Sign in to sync your progress</h3>
+                <p style="margin: 10px 0; color: #666;">Keep your Costco quest progress synced across all your devices</p>
+                <button class="google-signin-btn" onclick="signInWithGoogle()">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="white" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="white" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="white" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="white" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Sign in with Google
+                </button>
+            </div>
+
+            <!-- User Info Section -->
+            <div id="user-info" class="user-info">
+                <h3>Welcome back!</h3>
+                <p><strong id="user-name"></strong></p>
+                <p style="font-size: 0.9rem; color: #666;"><span id="user-email"></span></p>
+                <button class="signout-btn" onclick="signOutUser()">Sign Out</button>
+            </div>
+            
             <div class="stats">
                 <div class="stat-item">
                     <div class="stat-number" id="visitedCount">0</div>
@@ -336,6 +565,10 @@
         let markers = [];
         let currentView = 'checklist';
 
+        // Make variables globally accessible
+        window.costcoLocations = costcoLocations;
+        window.currentView = currentView;
+
         // Load coordinate lookup table
         async function loadCoordinates() {
             try {
@@ -350,7 +583,6 @@
 
         // Get coordinates from full address
         function getCoordinatesFromAddress(address, city, state, zipcode) {
-            // Create the full address key to match your JSON
             const fullAddress = `${address}, ${city}, ${state} ${zipcode}`;
             
             const coords = addressCoordinates[fullAddress];
@@ -358,12 +590,11 @@
                 return coords;
             }
             
-            // Fallback to estimation if address not found
             console.warn(`No coordinates found for: ${fullAddress}`);
             return getEstimatedCoordinates(zipcode, state);
         }
 
-        // Fallback coordinate estimation (in case JSON file fails to load)
+        // Fallback coordinate estimation
         function getEstimatedCoordinates(zipcode, state) {
             const firstDigit = zipcode.charAt(0);
             
@@ -407,7 +638,6 @@
                 const lines = csvText.trim().split('\n');
                 const locations = [];
 
-                // Parse CSV (skip header row)
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
                     if (!line) continue;
@@ -420,7 +650,6 @@
                         const state = parts[3];
                         const zipcode = parts[4];
 
-                        // Get coordinates from your generated coordinate file
                         const coords = getCoordinatesFromAddress(address, city, state, zipcode);
 
                         locations.push({
@@ -442,7 +671,6 @@
 
             } catch (error) {
                 console.error('Error loading CSV:', error);
-                // Fallback sample data
                 return [
                     { id: 1, name: "Costco Wholesale - Sample Location", address: "123 Main St, Sample City, CA 90210", city: "Sample City", state: "CA", zipcode: "90210", lat: 34.0522, lng: -118.2437, visited: false }
                 ];
@@ -460,10 +688,16 @@
             }
         }
 
-        // Save visited status to localStorage
-        function saveVisitedStatus() {
+        // Save visited status (now syncs with Firebase if user is signed in)
+        async function saveVisitedStatus() {
             const visitedIds = costcoLocations.filter(loc => loc.visited).map(loc => loc.id);
             localStorage.setItem('costcoVisits', JSON.stringify(visitedIds));
+            
+            // Also save to Firestore if user is signed in
+            if (window.saveVisitedToFirestore) {
+                await window.saveVisitedToFirestore(visitedIds);
+            }
+            
             updateStats();
         }
 
@@ -532,12 +766,15 @@
             });
         }
 
+        // Make renderChecklist globally accessible
+        window.renderChecklist = renderChecklist;
+
         // Toggle visited status
-        function toggleVisited(locationId) {
+        async function toggleVisited(locationId) {
             const location = costcoLocations.find(loc => loc.id === locationId);
             if (location) {
                 location.visited = !location.visited;
-                saveVisitedStatus();
+                await saveVisitedStatus();
                 renderChecklist();
                 if (currentView === 'map') {
                     updateMapMarkers();
@@ -546,11 +783,11 @@
         }
 
         // Clear all visits
-        function clearAllVisits() {
+        async function clearAllVisits() {
             costcoLocations.forEach(location => {
                 location.visited = false;
             });
-            saveVisitedStatus();
+            await saveVisitedStatus();
             renderChecklist();
             if (currentView === 'map') {
                 updateMapMarkers();
@@ -568,9 +805,13 @@
             document.getElementById('percentage').textContent = percentage + '%';
         }
 
+        // Make updateStats globally accessible
+        window.updateStats = updateStats;
+
         // Show checklist view
         function showChecklist() {
             currentView = 'checklist';
+            window.currentView = currentView;
             document.getElementById('checklistView').classList.remove('hidden');
             document.getElementById('mapView').classList.add('hidden');
             
@@ -583,6 +824,7 @@
         // Show map view
         function showMap() {
             currentView = 'map';
+            window.currentView = currentView;
             document.getElementById('checklistView').classList.add('hidden');
             document.getElementById('mapView').classList.remove('hidden');
             
@@ -638,6 +880,9 @@
             });
         }
 
+        // Make updateMapMarkers globally accessible
+        window.updateMapMarkers = updateMapMarkers;
+
         // Setup event listeners
         function setupEventListeners() {
             document.getElementById('searchInput').addEventListener('input', filterLocations);
@@ -647,8 +892,9 @@
 
         // Initialize the app
         async function init() {
-            await loadCoordinates(); // Load coordinates first
+            await loadCoordinates();
             costcoLocations = await loadLocationsFromCSV();
+            window.costcoLocations = costcoLocations; // Make globally accessible
             filteredLocations = [...costcoLocations];
             
             loadVisitedStatus();
@@ -660,6 +906,3 @@
 
         // Start the app when page loads
         document.addEventListener('DOMContentLoaded', init);
-    </script>
-</body>
-</html>
