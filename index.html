@@ -347,27 +347,6 @@
                 const lines = csvText.trim().split('\n');
                 const locations = [];
 
-                // State coordinates for mapping
-                const stateCoords = {
-                    'AK': [64.2008, -153.4937], 'AL': [32.3617, -86.7918], 'AR': [34.7465, -92.2896],
-                    'AZ': [33.7712, -111.3877], 'CA': [36.1162, -119.6816], 'CO': [39.0598, -105.3111],
-                    'CT': [41.5978, -72.7554], 'DC': [38.8974, -77.0365], 'DE': [39.3185, -75.5071],
-                    'FL': [27.7663, -81.6868], 'GA': [33.0406, -83.6431], 'HI': [21.0943, -157.4983],
-                    'IA': [42.0115, -93.2105], 'ID': [44.2405, -114.4788], 'IL': [40.3495, -88.9861],
-                    'IN': [39.8494, -86.2583], 'KS': [38.5266, -96.7265], 'KY': [37.6681, -84.6701],
-                    'LA': [31.1695, -91.8678], 'MA': [42.2352, -71.0275], 'MD': [39.0639, -76.8021],
-                    'ME': [44.6939, -69.3819], 'MI': [43.3266, -84.5361], 'MN': [45.7326, -93.9196],
-                    'MO': [38.4561, -92.2884], 'MS': [32.7364, -89.6678], 'MT': [47.0527, -110.2148],
-                    'NC': [35.6301, -79.8064], 'ND': [47.5289, -99.7840], 'NE': [41.1254, -98.2681],
-                    'NH': [43.4525, -71.5639], 'NJ': [40.3573, -74.4057], 'NM': [34.8405, -106.2485],
-                    'NV': [38.4199, -117.1219], 'NY': [42.1657, -74.9481], 'OH': [40.3888, -82.7649],
-                    'OK': [35.5653, -96.9289], 'OR': [44.5672, -122.1269], 'PA': [40.5908, -77.2098],
-                    'PR': [18.2208, -66.5901], 'SC': [33.8191, -80.9066], 'SD': [44.2998, -99.4388],
-                    'TN': [35.7478, -86.7923], 'TX': [31.0545, -97.5635], 'UT': [40.1135, -111.8535],
-                    'VA': [37.7693, -78.2057], 'VT': [44.0459, -72.7107], 'WA': [47.4009, -121.4905],
-                    'WI': [44.2685, -89.6165]
-                };
-
                 // Parse CSV (skip header row)
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
@@ -381,10 +360,8 @@
                         const state = parts[3];
                         const zipcode = parts[4];
 
-                        // Get base coordinates and add small random offset
-                        const baseCoords = stateCoords[state] || [39.8283, -98.5795];
-                        const lat = baseCoords[0] + (Math.random() - 0.5) * 1.5;
-                        const lng = baseCoords[1] + (Math.random() - 0.5) * 1.5;
+                        // Get coordinates from zip code
+                        const coords = await getCoordinatesFromZip(zipcode);
 
                         locations.push({
                             id: i,
@@ -393,8 +370,8 @@
                             city: city,
                             state: state,
                             zipcode: zipcode,
-                            lat: lat,
-                            lng: lng,
+                            lat: coords.lat,
+                            lng: coords.lng,
                             visited: false
                         });
                     }
@@ -407,9 +384,30 @@
                 console.error('Error loading CSV:', error);
                 // Fallback sample data
                 return [
-                    { id: 1, name: "Costco Wholesale - Sample Location", address: "123 Main St, Sample City, CA 90210", city: "Sample City", state: "CA", zipcode: "90210", lat: 36.1162, lng: -119.6816, visited: false }
+                    { id: 1, name: "Costco Wholesale - Sample Location", address: "123 Main St, Sample City, CA 90210", city: "Sample City", state: "CA", zipcode: "90210", lat: 34.0522, lng: -118.2437, visited: false }
                 ];
             }
+        }
+
+        // Get coordinates from zip code using a free geocoding service
+        async function getCoordinatesFromZip(zipcode) {
+            try {
+                // Use a free geocoding service (Nominatim OpenStreetMap)
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=us&postalcode=${zipcode}&limit=1`);
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    return {
+                        lat: parseFloat(data[0].lat),
+                        lng: parseFloat(data[0].lon)
+                    };
+                }
+            } catch (error) {
+                console.warn(`Could not geocode zip ${zipcode}:`, error);
+            }
+            
+            // Fallback to center of US if geocoding fails
+            return { lat: 39.8283, lng: -98.5795 };
         }
 
         // Load visited status from localStorage
