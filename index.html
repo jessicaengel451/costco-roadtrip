@@ -331,9 +331,69 @@
         // Global variables
         let costcoLocations = [];
         let filteredLocations = [];
+        let addressCoordinates = {};
         let map;
         let markers = [];
         let currentView = 'checklist';
+
+        // Load coordinate lookup table
+        async function loadCoordinates() {
+            try {
+                const response = await fetch('./costco_coordinates.json');
+                addressCoordinates = await response.json();
+                console.log('Loaded coordinates for', Object.keys(addressCoordinates).length, 'addresses');
+            } catch (error) {
+                console.error('Could not load coordinates file:', error);
+                console.log('Will fall back to estimated coordinates');
+            }
+        }
+
+        // Get coordinates from full address
+        function getCoordinatesFromAddress(address, city, state, zipcode) {
+            // Create the full address key to match your JSON
+            const fullAddress = `${address}, ${city}, ${state} ${zipcode}`;
+            
+            const coords = addressCoordinates[fullAddress];
+            if (coords) {
+                return coords;
+            }
+            
+            // Fallback to estimation if address not found
+            console.warn(`No coordinates found for: ${fullAddress}`);
+            return getEstimatedCoordinates(zipcode, state);
+        }
+
+        // Fallback coordinate estimation (in case JSON file fails to load)
+        function getEstimatedCoordinates(zipcode, state) {
+            const firstDigit = zipcode.charAt(0);
+            
+            const stateAdjustments = {
+                'CA': { latAdj: 0, lngAdj: 0 }, 'TX': { latAdj: -3, lngAdj: 8 }, 'FL': { latAdj: -8, lngAdj: 15 },
+                'NY': { latAdj: 6, lngAdj: 20 }, 'WA': { latAdj: 11, lngAdj: 2 }, 'AK': { latAdj: 28, lngAdj: -35 },
+                'HI': { latAdj: -18, lngAdj: -45 }, 'AZ': { latAdj: -3, lngAdj: 7 }, 'CO': { latAdj: 3, lngAdj: 12 },
+                'GA': { latAdj: -3, lngAdj: 13 }, 'IL': { latAdj: 5, lngAdj: 12 }, 'NC': { latAdj: -1, lngAdj: 18 },
+                'OH': { latAdj: 4, lngAdj: 17 }, 'PA': { latAdj: 4, lngAdj: 19 }, 'VA': { latAdj: 2, lngAdj: 18 },
+                'OR': { latAdj: 8, lngAdj: 3 }, 'UT': { latAdj: 4, lngAdj: 8 }, 'NV': { latAdj: 0, lngAdj: 4 },
+                'MN': { latAdj: 8, lngAdj: 7 }, 'WI': { latAdj: 8, lngAdj: 10 }, 'MI': { latAdj: 6, lngAdj: 15 }
+            };
+            
+            const zipBases = {
+                '0': [42.5, -71.5], '1': [40.7, -74.0], '2': [39.0, -77.0], '3': [33.5, -84.0], '4': [38.5, -85.0],
+                '5': [41.5, -93.5], '6': [39.0, -94.5], '7': [32.5, -97.0], '8': [39.5, -105.0], '9': [36.0, -119.0]
+            };
+            
+            const baseCoords = zipBases[firstDigit] || [39.8283, -98.5795];
+            const stateAdj = stateAdjustments[state] || { latAdj: 0, lngAdj: 0 };
+            
+            const lastTwo = parseInt(zipcode.slice(-2)) || 0;
+            const spreadLat = (lastTwo % 20 - 10) * 0.08;
+            const spreadLng = ((Math.floor(lastTwo / 2)) % 20 - 10) * 0.08;
+            
+            return {
+                lat: baseCoords[0] + stateAdj.latAdj + spreadLat,
+                lng: baseCoords[1] + stateAdj.lngAdj + spreadLng
+            };
+        }
 
         // Load locations from CSV file
         async function loadLocationsFromCSV() {
@@ -360,8 +420,8 @@
                         const state = parts[3];
                         const zipcode = parts[4];
 
-                        // Get coordinates from zip code
-                        const coords = await getCoordinatesFromZip(zipcode);
+                        // Get coordinates from your generated coordinate file
+                        const coords = getCoordinatesFromAddress(address, city, state, zipcode);
 
                         locations.push({
                             id: i,
@@ -388,32 +448,6 @@
                 ];
             }
         }
-
-        // Load coordinate lookup table
-        async function loadCoordinates() {
-            try {
-                const response = await fetch('./costco_coordinates.json');
-                addressCoordinates = await response.json();
-                console.log('Loaded coordinates for', Object.keys(addressCoordinates).length, 'addresses');
-            } catch (error) {
-            console.error('Could not load coordinates file:', error);
-            }
-        }
-
-// Get coordinates from full address
-function getCoordinatesFromAddress(address, city, state, zipcode) {
-    // Create the full address key to match your JSON
-    const fullAddress = `${address}, ${city}, ${state} ${zipcode}`;
-    
-    const coords = getCoordinatesFromAddress(address, city, state, zipcode);
-    if (coords) {
-        return coords;
-    }
-    
-    // Fallback if address not found
-    console.warn(`No coordinates found for: ${fullAddress}`);
-    return { lat: 39.8283, lng: -98.5795 }; // Center of US fallback
-}
 
         // Load visited status from localStorage
         function loadVisitedStatus() {
@@ -613,8 +647,9 @@ function getCoordinatesFromAddress(address, city, state, zipcode) {
 
         // Initialize the app
         async function init() {
-            await loadCoordinates(); // Add this line
+            await loadCoordinates(); // Load coordinates first
             costcoLocations = await loadLocationsFromCSV();
+            filteredLocations = [...costcoLocations];
             
             loadVisitedStatus();
             populateStateFilter();
