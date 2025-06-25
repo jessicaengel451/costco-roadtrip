@@ -274,6 +274,159 @@
             font-size: 0.9rem;
         }
 
+        /* NEW: Share button styles */
+        .share-btn {
+            background: linear-gradient(45deg, #4267B2, #365899);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 10px;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .share-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(66, 103, 178, 0.4);
+        }
+
+        .share-btn.reddit {
+            background: linear-gradient(45deg, #FF4500, #FF5722);
+        }
+
+        .share-btn.reddit:hover {
+            box-shadow: 0 5px 15px rgba(255, 69, 0, 0.4);
+        }
+
+        /* NEW: Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            background: linear-gradient(45deg, #e31837, #ff4757);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+
+        .close:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .format-option {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .format-option:hover {
+            border-color: #e31837;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .format-header {
+            background: #e9ecef;
+            padding: 15px;
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .format-content {
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            background: white;
+            color: #333;
+        }
+
+        .copy-format-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .copy-format-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .copy-format-btn.copied {
+            background: #17a2b8;
+        }
+
         .controls {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -520,6 +673,20 @@
                     <div class="stat-number" id="percentage">0%</div>
                     <div class="stat-label">Completion</div>
                 </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="stateCount">0</div>
+                    <div class="stat-label">States</div>
+                </div>
+            </div>
+
+            <!-- NEW: Share buttons -->
+            <div style="margin-top: 20px;">
+                <button class="share-btn" onclick="openShareModal()">
+                    📱 Share Progress
+                </button>
+                <button class="share-btn reddit" onclick="openShareModal('reddit')">
+                    🔥 Share on Reddit
+                </button>
             </div>
         </div>
 
@@ -548,6 +715,19 @@
             </div>
             <div id="mapView" class="hidden">
                 <div id="map"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Share Modal -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📱 Share Your Progress</h2>
+                <span class="close" onclick="closeShareModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content populated by JavaScript -->
             </div>
         </div>
     </div>
@@ -787,15 +967,182 @@
             }
         }
 
+        // Get visited states count
+        function getVisitedStatesCount() {
+            const visitedStates = new Set();
+            costcoLocations.forEach(location => {
+                if (location.visited) {
+                    visitedStates.add(location.state);
+                }
+            });
+            return visitedStates.size;
+        }
+
+        // Get list of visited states
+        function getVisitedStates() {
+            const visitedStates = new Set();
+            costcoLocations.forEach(location => {
+                if (location.visited) {
+                    visitedStates.add(location.state);
+                }
+            });
+            return Array.from(visitedStates).sort();
+        }
+
         // Update statistics
         function updateStats() {
             const visitedCount = costcoLocations.filter(loc => loc.visited).length;
             const totalCount = costcoLocations.length;
             const percentage = totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0;
+            const stateCount = getVisitedStatesCount();
 
             document.getElementById('visitedCount').textContent = visitedCount;
             document.getElementById('totalCount').textContent = totalCount;
             document.getElementById('percentage').textContent = percentage + '%';
+            document.getElementById('stateCount').textContent = stateCount;
+        }
+
+        // NEW: Generate progress bar
+        function generateProgressBar(current, total, length = 20) {
+            const filled = Math.round((current / total) * length);
+            return '█'.repeat(filled) + '░'.repeat(length - filled);
+        }
+
+        // NEW: Generate share formats
+        function generateShareFormats() {
+            const visitedCount = costcoLocations.filter(loc => loc.visited).length;
+            const totalCount = costcoLocations.length;
+            const percentage = Math.round((visitedCount / totalCount) * 100);
+            const stateCount = getVisitedStatesCount();
+            const visitedStates = getVisitedStates();
+            const progressBar = generateProgressBar(visitedCount, totalCount);
+            const shortProgressBar = generateProgressBar(visitedCount, totalCount, 10);
+            const date = new Date().toLocaleDateString();
+
+            return {
+                basic: `🏪 CostcoQuest ${date} 🏪
+
+📍 ${visitedCount}/${totalCount} locations (${percentage}%)
+🗺️ ${stateCount}/50 states visited
+
+Join the quest: costcoquest.com`,
+
+                detailed: `🏪 CostcoQuest Progress 🏪
+
+📊 ${progressBar} ${percentage}%
+📍 ${visitedCount}/${totalCount} locations
+🗺️ ${stateCount}/50 states
+
+✅ Visited: ${visitedStates.slice(0, 8).join(', ')}${visitedStates.length > 8 ? ` +${visitedStates.length - 8} more` : ''}
+
+Share yours: costcoquest.com`,
+
+                reddit: `🏪 CostcoQuest: ${visitedCount}/${totalCount} locations (${percentage}%) across ${stateCount} states
+${shortProgressBar}
+costcoquest.com`,
+
+                redditDetailed: `🏪 My Costco Progress 🏪
+
+Progress: ${shortProgressBar} ${percentage}%
+📍 ${visitedCount}/${totalCount} total | 🗺️ ${stateCount}/50 states
+
+✅ Conquered: ${visitedStates.slice(0, 10).join(', ')}${visitedStates.length > 10 ? '...' : ''}
+
+Anyone else tracking theirs? costcoquest.com`,
+
+                minimal: `🏪 ${visitedCount}/${totalCount} Costcos (${percentage}%) | ${stateCount}/50 states | costcoquest.com`
+            };
+        }
+
+        // NEW: Open share modal
+        function openShareModal(type = 'general') {
+            const modal = document.getElementById('shareModal');
+            const modalBody = document.getElementById('modalBody');
+            const formats = generateShareFormats();
+
+            let content = '';
+
+            if (type === 'reddit') {
+                content = `
+                    <div class="format-option">
+                        <div class="format-header">
+                            🔥 Reddit Comment Format
+                            <button class="copy-format-btn" onclick="copyFormat('reddit')">Copy</button>
+                        </div>
+                        <div class="format-content" id="reddit">${formats.reddit}</div>
+                    </div>
+                    
+                    <div class="format-option">
+                        <div class="format-header">
+                            📝 Reddit Post Format
+                            <button class="copy-format-btn" onclick="copyFormat('redditDetailed')">Copy</button>
+                        </div>
+                        <div class="format-content" id="redditDetailed">${formats.redditDetailed}</div>
+                    </div>
+                    
+                    <div class="format-option">
+                        <div class="format-header">
+                            ⚡ One-Line Format
+                            <button class="copy-format-btn" onclick="copyFormat('minimal')">Copy</button>
+                        </div>
+                        <div class="format-content" id="minimal">${formats.minimal}</div>
+                    </div>
+                `;
+            } else {
+                content = `
+                    <div class="format-option">
+                        <div class="format-header">
+                            📱 Basic Share
+                            <button class="copy-format-btn" onclick="copyFormat('basic')">Copy</button>
+                        </div>
+                        <div class="format-content" id="basic">${formats.basic}</div>
+                    </div>
+                    
+                    <div class="format-option">
+                        <div class="format-header">
+                            📊 Detailed Progress
+                            <button class="copy-format-btn" onclick="copyFormat('detailed')">Copy</button>
+                        </div>
+                        <div class="format-content" id="detailed">${formats.detailed}</div>
+                    </div>
+                    
+                    <div class="format-option">
+                        <div class="format-header">
+                            🔥 Reddit Ready
+                            <button class="copy-format-btn" onclick="copyFormat('redditDetailed')">Copy</button>
+                        </div>
+                        <div class="format-content" id="redditDetailed">${formats.redditDetailed}</div>
+                    </div>
+                `;
+            }
+
+            modalBody.innerHTML = content;
+            modal.style.display = 'block';
+        }
+
+        // NEW: Close share modal
+        function closeShareModal() {
+            document.getElementById('shareModal').style.display = 'none';
+        }
+
+        // NEW: Copy format to clipboard
+        function copyFormat(formatId) {
+            const text = document.getElementById(formatId).textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                btn.classList.add('copied');
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                alert('Copied to clipboard!');
+            });
         }
 
         // Show checklist view
@@ -896,6 +1243,14 @@
             renderChecklist();
             updateStats();
             setupEventListeners();
+        }
+
+        // NEW: Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('shareModal');
+            if (event.target === modal) {
+                closeShareModal();
+            }
         }
 
         // Start the app when page loads
