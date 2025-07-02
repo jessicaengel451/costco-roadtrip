@@ -4,7 +4,7 @@
 
 *Built with ❤️ by a daughter for his dad as a Father's Day gift - completed in just 4 hours with Claude's help!*
 
-![CostcoQuest Screenshot](./Screenshot 2025-07-02 113753.png)
+![CostcoQuest Screenshot](https://github.com/jessicaengel451/costco-roadtrip/blob/6ee547d78dff4aefae132caf68552c2b5ac09c91/Screenshot%202025-07-02%20113753.png)
 *Interactive map showing Costco locations across the United States with visit tracking*
 
 ## 🎯 About
