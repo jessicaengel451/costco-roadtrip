@@ -238,18 +238,11 @@ async function mergeCostcoData() {
 
         // Create a deduplication key for matching locations
         function createLocationKey(row) {
-            const city = (row['City'] || '').toString().trim().toUpperCase();
             const address = (row['Address'] || '').toString().trim().toUpperCase().replace(/\s+/g, ' ');
-            const country = (row['Country'] || '').toString().trim().toUpperCase();
+            const city = (row['City'] || '').toString().trim().toUpperCase();
             
-            // For US locations, also include state in the key
-            if (country === 'US') {
-                const state = (row['State'] || '').toString().trim().toUpperCase();
-                return `${country}|${state}|${city}|${address}`;
-            }
-            
-            // For international locations, use country instead of state
-            return `${country}|${city}|${address}`;
+            // Use address + city as the unique key since addresses match exactly
+            return `${address}|${city}`;
         }
 
         // Find duplicates between the datasets

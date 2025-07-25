@@ -1,6 +1,6 @@
-const fs = require('fs');
-const readline = require('readline');
-const { exec } = require('child_process');
+import fs from 'fs';
+import readline from 'readline';
+import { exec } from 'child_process';
 
 // Create readline interface
 const rl = readline.createInterface({

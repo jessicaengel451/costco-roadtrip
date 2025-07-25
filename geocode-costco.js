@@ -1,4 +1,5 @@
-const fs = require('fs');
+import fs from 'fs';
+const startIndex = 606-1; // Adjust this to the starting index for geocoding from the CSV to avoid unnessary reprocessing
 
 async function geocodeAddress(address) {
     try {
@@ -31,7 +32,7 @@ async function geocodeAll() {
     const lines = csvData.trim().split('\n');
     const results = {};
     
-    for (let i = 1; i < lines.length; i++) {
+    for (let i = startIndex; i < 606; i++) {
         const parts = lines[i].split(',');
         if (parts.length >= 5) {
             const fullAddress = `${parts[1]}, ${parts[2]}, ${parts[3]} ${parts[4]}`;
@@ -42,7 +43,7 @@ async function geocodeAll() {
         }
     }
     
-    fs.writeFileSync('costco_coordinates.json', JSON.stringify(results, null, 2));
+    fs.writeFileSync('costco_coordinates_new.json', JSON.stringify(results, null, 2));
     console.log('✅ Done! Created costco_coordinates.json');
 }
 
