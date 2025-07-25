@@ -1,5 +1,4 @@
-Store Name,Address,City,State,Zipcode,Phone,URL
-,Country,Region
+Store Name,Address,City,State,Zipcode,Phone,URL,Country,Region
 Anchorage,330 W DIMOND BLVD,ANCHORAGE,AK,99515-1903,(907) 349-2335,https://www.costco.com/warehouse-locations/anchorage-ak-10.html,US,NW
 Anchorage Business Center,1074 N MULDOON RD,ANCHORAGE,AK,99504-2073,(907) 416-9780,https://www.costco.com/warehouse-locations/anchorage-business-center-anchorage-ak-1661.html,US,NW
 Fairbanks,48 COLLEGE RD,FAIRBANKS,AK,99701-1706,(907) 205-3607,https://www.costco.com/warehouse-locations/fairbanks-ak-1342.html,US,NW
