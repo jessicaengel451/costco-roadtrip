@@ -576,6 +576,10 @@
             margin-top: 4px;
         }
 
+        .location-region.international {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+    }
+
         .location-region.northeast {
             background: linear-gradient(45deg, #17a2b8, #138496);
         }
@@ -786,47 +790,273 @@
         let currentView = 'checklist';
 
         // NEW: US Regions mapping
-        const US_REGIONS = {
-            'Northeast': {
-                states: ['ME', 'NH', 'VT', 'MA', 'RI', 'CT', 'NY', 'NJ', 'PA'],
-                emoji: '🗽',
-                color: 'northeast'
-            },
-            'Southeast': {
-                states: ['DE', 'MD', 'DC', 'VA', 'WV', 'KY', 'TN', 'NC', 'SC', 'GA', 'FL', 'AL', 'MS', 'AR', 'LA'],
-                emoji: '🏖️',
-                color: 'southeast'
-            },
-            'Midwest': {
-                states: ['OH', 'MI', 'IN', 'IL', 'WI', 'MN', 'IA', 'MO', 'ND', 'SD', 'NE', 'KS'],
-                emoji: '🌾',
-                color: 'midwest'
-            },
-            'Southwest': {
-                states: ['TX', 'OK', 'NM', 'AZ'],
-                emoji: '🌵',
-                color: 'southwest'
-            },
-            'West': {
-                states: ['MT', 'WY', 'CO', 'UT', 'ID', 'WA', 'OR', 'NV', 'CA', 'AK', 'HI'],
-                emoji: '🏔️',
-                color: 'west'
-            }
-        };
+        const ALL_REGIONS = {
+    // US Regions
+    'Northeast': {
+        codes: ['NE'],
+        states: ['ME', 'NH', 'VT', 'MA', 'RI', 'CT', 'NY', 'NJ', 'PA', 'DC', 'DE', 'MD', 'VA', 'WV'],
+        emoji: '🗽',
+        color: 'northeast'
+    },
+    'Southeast': {
+        codes: ['SE'],
+        states: ['KY', 'TN', 'NC', 'SC', 'GA', 'FL', 'AL', 'MS', 'AR', 'LA'],
+        emoji: '🏖️',
+        color: 'southeast'
+    },
+    'Midwest': {
+        codes: ['MW'],
+        states: ['OH', 'MI', 'IN', 'IL', 'WI', 'MN', 'IA', 'MO', 'ND', 'SD', 'NE', 'KS'],
+        emoji: '🌾',
+        color: 'midwest'
+    },
+    'Northwest': {
+        codes: ['NW'],
+        states: ['WA', 'OR', 'ID', 'MT', 'AK'],
+        emoji: '🏔️',
+        color: 'west'
+    },
+    'Texas': {
+        codes: ['TE'],
+        states: ['TX', 'OK', 'AR', 'LA'],
+        emoji: '🤠',
+        color: 'southwest'
+    },
+    'Southwest': {
+        codes: ['SW'],
+        states: ['AZ', 'NM', 'CO', 'UT', 'WY', 'NV'],
+        emoji: '🌵',
+        color: 'southwest'
+    },
+    'Bay Area': {
+        codes: ['BA'],
+        states: [],
+        emoji: '🌉',
+        color: 'west'
+    },
+    'Los Angeles': {
+        codes: ['LA'],
+        states: ['HI'], // Hawaii grouped with LA
+        emoji: '🌴',
+        color: 'west'
+    },
+    'San Diego': {
+        codes: ['SD'],
+        states: [],
+        emoji: '☀️',
+        color: 'west'
+    },
+    'Central California': {
+        codes: ['CC'],
+        states: [],
+        emoji: '🍇',
+        color: 'west'
+    },
+    // Canadian Regions
+    'Eastern Canada': {
+        codes: ['EC'],
+        states: [],
+        emoji: '🍁',
+        color: 'international'
+    },
+    'Western Canada': {
+        codes: ['WC'],
+        states: [],
+        emoji: '🏔️',
+        color: 'international'
+    },
+    'Central Canada': {
+        codes: ['CB'],
+        states: [],
+        emoji: '🌾',
+        color: 'international'
+    },
+    'Ontario': {
+        codes: ['ON'],
+        states: [],
+        emoji: '🏙️',
+        color: 'international'
+    },
+    // Mexican Regions
+    'Northern Mexico': {
+        codes: ['MX-NO'],
+        states: [],
+        emoji: '🌮',
+        color: 'international'
+    },
+    'Central Mexico': {
+        codes: ['MX-CE'],
+        states: [],
+        emoji: '🏛️',
+        color: 'international'
+    },
+    'Southern Mexico': {
+        codes: ['MX-SU'],
+        states: [],
+        emoji: '🏝️',
+        color: 'international'
+    },
+    // Asian Regions
+    'Japan - Kanto': {
+        codes: ['JP-KA'],
+        states: [],
+        emoji: '🗾',
+        color: 'international'
+    },
+    'Japan - Kansai': {
+        codes: ['JP-KI'],
+        states: [],
+        emoji: '⛩️',
+        color: 'international'
+    },
+    'Japan - Chubu': {
+        codes: ['JP-CH'],
+        states: [],
+        emoji: '🗻',
+        color: 'international'
+    },
+    'Japan - Kyushu': {
+        codes: ['JP-KY'],
+        states: [],
+        emoji: '🌸',
+        color: 'international'
+    },
+    'Japan - Other': {
+        codes: ['JP-TO', 'JP-HO', 'JP-OT'],
+        states: [],
+        emoji: '🏯',
+        color: 'international'
+    },
+    'South Korea - Seoul': {
+        codes: ['KO-SE'],
+        states: [],
+        emoji: '🏙️',
+        color: 'international'
+    },
+    'South Korea - Busan': {
+        codes: ['KO-BS'],
+        states: [],
+        emoji: '🌊',
+        color: 'international'
+    },
+    'South Korea - Central': {
+        codes: ['KO-CE', 'KO-OT'],
+        states: [],
+        emoji: '🇰🇷',
+        color: 'international'
+    },
+    'Taiwan - North': {
+        codes: ['TW-NO'],
+        states: [],
+        emoji: '🏙️',
+        color: 'international'
+    },
+    'Taiwan - Central': {
+        codes: ['TW-CE'],
+        states: [],
+        emoji: '🌄',
+        color: 'international'
+    },
+    'Taiwan - South': {
+        codes: ['TW-SO'],
+        states: [],
+        emoji: '🏖️',
+        color: 'international'
+    },
+    'Taiwan - East': {
+        codes: ['TW-EA'],
+        states: [],
+        emoji: '🏞️',
+        color: 'international'
+    },
+    // Other Regions
+    'Australia - East': {
+        codes: ['AU-EA'],
+        states: [],
+        emoji: '🦘',
+        color: 'international'
+    },
+    'Australia - South': {
+        codes: ['AU-SO'],
+        states: [],
+        emoji: '🐨',
+        color: 'international'
+    },
+    'Australia - West': {
+        codes: ['AU-WE'],
+        states: [],
+        emoji: '🏖️',
+        color: 'international'
+    },
+    'United Kingdom': {
+        codes: ['UK'],
+        states: [],
+        emoji: '🇬🇧',
+        color: 'international'
+    },
+    'Spain': {
+        codes: ['ES'],
+        states: [],
+        emoji: '🇪🇸',
+        color: 'international'
+    },
+    'France': {
+        codes: ['FR'],
+        states: [],
+        emoji: '🇫🇷',
+        color: 'international'
+    },
+    'Switzerland': {
+        codes: ['CH'],
+        states: [],
+        emoji: '🇨🇭',
+        color: 'international'
+    },
+    'Iceland': {
+        codes: ['IS'],
+        states: [],
+        emoji: '🇮🇸',
+        color: 'international'
+    },
+    'New Zealand': {
+        codes: ['NZ'],
+        states: [],
+        emoji: '🇳🇿',
+        color: 'international'
+    }
+};
 
-        // NEW: Get region for state
-        function getRegionForState(state) {
-            for (const [regionName, regionData] of Object.entries(US_REGIONS)) {
-                if (regionData.states.includes(state)) {
-                    return {
-                        name: regionName,
-                        emoji: regionData.emoji,
-                        color: regionData.color
-                    };
-                }
+        // Update the getRegionForState function to handle region codes:
+function getRegionForLocation(location) {
+    // If location has a region code from the CSV, use that
+    if (location.regionCode) {
+        for (const [regionName, regionData] of Object.entries(ALL_REGIONS)) {
+            if (regionData.codes && regionData.codes.includes(location.regionCode)) {
+                return {
+                    name: regionName,
+                    emoji: regionData.emoji,
+                    color: regionData.color
+                };
             }
-            return { name: 'Other', emoji: '❓', color: 'other' };
         }
+    }
+    
+    // Fall back to state-based lookup for US locations without region codes
+    if (location.country === 'US' || !location.country) {
+        for (const [regionName, regionData] of Object.entries(ALL_REGIONS)) {
+            if (regionData.states && regionData.states.includes(location.state)) {
+                return {
+                    name: regionName,
+                    emoji: regionData.emoji,
+                    color: regionData.color
+                };
+            }
+        }
+    }
+    
+    return { name: 'Other', emoji: '❓', color: 'other' };
+}
+
 
         // Make variables globally accessible
         window.costcoLocations = costcoLocations;
@@ -912,22 +1142,31 @@
                         const city = parts[2];
                         const state = parts[3];
                         const zipcode = parts[4];
+                        // In the CSV parsing section, after getting the parts array:
+                        const regionCode = parts[8] || ''; // Assuming Region is the 9th column (index 8)
 
                         const coords = getCoordinatesFromAddress(address, city, state, zipcode);
-                        const region = getRegionForState(state);
+                        const region = getRegionForLocation({ state, regionCode });
 
                         locations.push({
                             id: i,
-                            name: `${storeName}`,
+                            name: storeName,
                             address: `${address}, ${city}, ${state} ${zipcode}`,
                             city: city,
                             state: state,
                             zipcode: zipcode,
-                            region: region,
+                            country: parts[7] || 'US', // Assuming Country is the 8th column
+                            regionCode: regionCode, // Store the region code from CSV
+                            region: getRegionForLocation({ 
+                                regionCode: regionCode, 
+                            country: parts[7] || 'US', 
+                            state: state 
+                        }),
+                            // Use the new getRegionForLocation function
                             lat: coords.lat,
                             lng: coords.lng,
                             visited: false
-                        });
+    });
                     }
                 }
 
@@ -971,7 +1210,7 @@
             const regionFilter = document.getElementById('regionFilter');
             regionFilter.innerHTML = '<option value="">All Regions</option>';
             
-            Object.entries(US_REGIONS).forEach(([regionName, regionData]) => {
+            Object.entries(ALL_REGIONS).forEach(([regionName, regionData]) => {
                 const option = document.createElement('option');
                 option.value = regionName;
                 option.textContent = `${regionData.emoji} ${regionName}`;
@@ -1152,8 +1391,8 @@
 
             // Create region summary with emojis
             const regionSummary = visitedRegions.map(regionName => {
-                const regionData = US_REGIONS[regionName];
-                return `${regionData.emoji} ${regionName}`;
+                const regionData = ALL_REGIONS[regionName]; // Change from US_REGIONS to ALL_REGIONS
+                return regionData ? `${regionData.emoji} ${regionName}` : regionName;
             }).join(', ');
 
             return {
