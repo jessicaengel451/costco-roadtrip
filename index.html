@@ -1087,36 +1087,9 @@ function getRegionForLocation(location) {
             return getEstimatedCoordinates(zipcode, state);
         }
 
-        // Also update the coordinate estimation for international locations:
-        function getEstimatedCoordinates(zipcode, state, country) {
-            // Add basic coordinates for non-US countries
-            const countryCoordinates = {
-                'CA': { lat: 56.1304, lng: -106.3468 }, // Canada center
-                'MX': { lat: 23.6345, lng: -102.5528 }, // Mexico center
-                'JP': { lat: 36.2048, lng: 138.2529 }, // Japan center
-                'KO': { lat: 35.9078, lng: 127.7669 }, // South Korea center
-                'TW': { lat: 23.5937, lng: 120.9605 }, // Taiwan center
-                'AU': { lat: -25.2744, lng: 133.7751 }, // Australia center
-                'GB': { lat: 55.3781, lng: -3.4360 }, // UK center
-                'ES': { lat: 40.4637, lng: -3.7492 }, // Spain center
-                'FR': { lat: 46.2276, lng: 2.2137 }, // France center
-                'CH': { lat: 46.8182, lng: 8.2275 }, // Switzerland center
-                'IS': { lat: 64.9631, lng: -19.0208 }, // Iceland center
-                'NZ': { lat: -40.9006, lng: 174.8860 } // New Zealand center
-            };
-            
-            if (country && country !== 'US' && countryCoordinates[country]) {
-                // Add some random offset to spread out locations within the country
-                const baseCoords = countryCoordinates[country];
-                const offset = 2; // degrees of random spread
-                return {
-                    lat: baseCoords.lat + (Math.random() - 0.5) * offset,
-                    lng: baseCoords.lng + (Math.random() - 0.5) * offset
-                };
-            }
-            
-            // Original US coordinate estimation logic
-            const firstDigit = zipcode ? zipcode.charAt(0) : '5';
+        // Fallback coordinate estimation
+        function getEstimatedCoordinates(zipcode, state) {
+            const firstDigit = zipcode.charAt(0);
             
             const stateAdjustments = {
                 'CA': { latAdj: 0, lngAdj: 0 }, 'TX': { latAdj: -3, lngAdj: 8 }, 'FL': { latAdj: -8, lngAdj: 15 },
@@ -1136,7 +1109,7 @@ function getRegionForLocation(location) {
             const baseCoords = zipBases[firstDigit] || [39.8283, -98.5795];
             const stateAdj = stateAdjustments[state] || { latAdj: 0, lngAdj: 0 };
             
-            const lastTwo = parseInt(zipcode ? zipcode.slice(-2) : '50') || 0;
+            const lastTwo = parseInt(zipcode.slice(-2)) || 0;
             const spreadLat = (lastTwo % 20 - 10) * 0.08;
             const spreadLng = ((Math.floor(lastTwo / 2)) % 20 - 10) * 0.08;
             
@@ -1172,7 +1145,7 @@ function getRegionForLocation(location) {
                         // In the CSV parsing section, after getting the parts array:
                         const regionCode = parts[8] || ''; // Assuming Region is the 9th column (index 8)
 
-                        const coords = getCoordinatesFromAddress(address, city, state, zipcode, country);
+                        const coords = getCoordinatesFromAddress(address, city, state, zipcode);
                         const region = getRegionForLocation({ state, regionCode });
 
                         locations.push({
@@ -1578,39 +1551,25 @@ Anyone else tracking theirs? costcoquest.com`,
             initMap();
         }
 
-// Replace your initMap function with this updated version:
-
         // Initialize map
         function initMap() {
             if (!map) {
-                // Create map with a more zoomed out view to see the whole world
-                map = L.map('map').setView([30, -20], 2); // Centered on Atlantic, zoom level 2 for world view
+                map = L.map('map').setView([39.8283, -98.5795], 4);
                 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 18,
-                    minZoom: 2
+                    attribution: '© OpenStreetMap contributors'
                 }).addTo(map);
             }
             
             updateMapMarkers();
-            
-            // After markers are added, fit the map to show all locations
-            setTimeout(() => {
-                if (markers.length > 0) {
-                    const group = new L.featureGroup(markers);
-                    map.fitBounds(group.getBounds().pad(0.1)); // Add 10% padding
-                }
-            }, 100);
         }
 
-        // Update the updateMapMarkers function to better handle international locations:
+        // Update map markers
         function updateMapMarkers() {
             markers.forEach(marker => map.removeLayer(marker));
             markers = [];
 
             filteredLocations.forEach(location => {
-                // Different marker sizes based on zoom level
                 const icon = L.divIcon({
                     className: 'custom-marker',
                     html: location.visited ? 
@@ -1626,13 +1585,12 @@ Anyone else tracking theirs? costcoquest.com`,
                         <div style="min-width: 200px;">
                             <h4 style="margin: 0 0 8px 0; color: #e31837;">${location.name}</h4>
                             <p style="margin: 0 0 8px 0; font-size: 0.9rem;">${location.address}</p>
-                            <div style="margin: 4px 0; padding: 2px 8px; background: linear-gradient(45deg, #${location.region.color === 'northeast' ? '17a2b8' : location.region.color === 'southeast' ? 'fd7e14' : location.region.color === 'midwest' ? '6f42c1' : location.region.color === 'southwest' ? 'dc3545' : location.region.color === 'west' ? '28a745' : '007bff'}, #555); color: white; border-radius: 12px; font-size: 0.75rem; display: inline-block;">
+                            <div style="margin: 4px 0; padding: 2px 8px; background: linear-gradient(45deg, #${location.region.color === 'northeast' ? '17a2b8' : location.region.color === 'southeast' ? 'fd7e14' : location.region.color === 'midwest' ? '6f42c1' : location.region.color === 'southwest' ? 'dc3545' : '28a745'}, #555); color: white; border-radius: 12px; font-size: 0.75rem; display: inline-block;">
                                 ${location.region.emoji} ${location.region.name}
                             </div>
-                            ${location.country !== 'US' ? `<div style="margin: 4px 0; font-size: 0.85rem; color: #666;">Country: ${location.country}</div>` : ''}
                             <label style="display: flex; align-items: center; cursor: pointer; margin-top: 8px;">
                                 <input type="checkbox" ${location.visited ? 'checked' : ''} 
-                                    onchange="toggleVisited(${location.id})" style="margin-right: 8px;">
+                                       onchange="toggleVisited(${location.id})" style="margin-right: 8px;">
                                 <span style="font-weight: 600;">${location.visited ? 'Visited' : 'Mark as visited'}</span>
                             </label>
                         </div>
@@ -1640,12 +1598,6 @@ Anyone else tracking theirs? costcoquest.com`,
 
                 markers.push(marker);
             });
-            
-            // Auto-fit bounds if we have markers
-            if (markers.length > 0 && map) {
-                const group = new L.featureGroup(markers);
-                map.fitBounds(group.getBounds().pad(0.1));
-            }
         }
 
         // Make functions globally accessible
