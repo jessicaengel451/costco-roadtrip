@@ -26,6 +26,19 @@ What does **NOT** need to be a secret: the AWS account ID (it's in `AWS_ROLE_ARN
 
 ## One-time bootstrap
 
+### 0. The shortcut: `scripts/bootstrap-aws.sh`
+
+Steps 1 and (optionally) 4 below are scripted. From a shell with AWS admin credentials:
+
+```bash
+GITHUB_OWNER=jessicaengel451 GITHUB_REPO=costco-roadtrip \
+  ./scripts/bootstrap-aws.sh
+```
+
+This is idempotent — safe to re-run. It creates the OIDC provider, the IAM role + permissions, the state bucket (versioned + encrypted + public-blocked), and the DDB lock table. At the end it prints the role ARN to paste into the `AWS_ROLE_ARN` secret. Pass `SKIP_REMOTE_STATE=1` to skip the S3+DDB part.
+
+You still need to do steps 2 (Google OAuth) and 3 (GitHub PAT) by hand.
+
 ### 1. AWS account + OIDC role
 
 GitHub Actions assumes an IAM role via OIDC — no long-lived AWS keys.
