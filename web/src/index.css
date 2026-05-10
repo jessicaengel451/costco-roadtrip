@@ -546,8 +546,13 @@ body {
     font-size: 2rem;
   }
   .stats {
-    flex-direction: column;
-    gap: 20px;
+    gap: 16px;
+  }
+  .stat-number {
+    font-size: 1.5rem;
+  }
+  .stat-label {
+    font-size: 0.8rem;
   }
   .search-filter {
     flex-direction: column;
