@@ -7,6 +7,23 @@ This refactor splits the project into:
 - `infra/lambdas/` — Node 20 TS Lambda handlers, bundled by esbuild
 - `scripts/` — one-off build helpers (locations data pipeline, aws-config emit)
 
+## Secret reference (TL;DR)
+
+What you need to put in **GitHub repo Settings → Secrets and variables → Actions**:
+
+| Secret | What it is | Where it comes from |
+|---|---|---|
+| `AWS_ROLE_ARN` | OIDC role ARN that GitHub Actions assumes for AWS access. | Created in AWS IAM (step 1 below). Format: `arn:aws:iam::ACCOUNT:role/<role-name>`. |
+| `TF_VAR_GOOGLE_CLIENT_ID` | Google OAuth client ID for Cognito's Google IdP. | Google Cloud Console (step 2). |
+| `TF_VAR_GOOGLE_CLIENT_SECRET` | Matching OAuth client secret. | Google Cloud Console (step 2). |
+| `TF_VAR_GITHUB_REPO` | Public repo URL for Amplify Hosting to clone. e.g. `https://github.com/jessicaengel451/costco-roadtrip`. | Your GitHub repo URL. |
+| `TF_VAR_GITHUB_OAUTH_TOKEN` | Personal access token Amplify Hosting uses to pull the repo. | GitHub → Developer settings → PAT (classic) with `repo` scope (step 3). |
+| `AWS_CONFIG_JSON` | Frontend auth/api config. Written to `web/src/aws-config.json` in CI before `npm run build` and Playwright. | After first `terraform apply`, download the `aws-config-json` artifact from the deploy-dev workflow run and paste its contents here. (This mirrors swimcoach's `AMPLIFY_OUTPUTS_JSON` pattern.) |
+
+You'll also create a **GitHub Environment** named `dev` (Settings → Environments) so the deploy job has a soft gate. Add a `prod` environment with required reviewers when you're ready for prod.
+
+What does **NOT** need to be a secret: the AWS account ID (it's in `AWS_ROLE_ARN` already), the Cognito user pool ID, the API URL — those are all derivable from `AWS_CONFIG_JSON`.
+
 ## One-time bootstrap
 
 ### 1. AWS account + OIDC role
@@ -46,6 +63,18 @@ Personal access token with `repo` scope — Amplify Hosting needs it to clone th
 
 - Save as `TF_VAR_GITHUB_OAUTH_TOKEN`.
 - Save the repo URL as `TF_VAR_GITHUB_REPO` (e.g. `https://github.com/jessicaengel/costco-roadtrip`).
+
+### 3a. AWS_CONFIG_JSON (after first apply)
+
+The frontend imports `web/src/aws-config.json` (region, user pool id, client id, hosted UI domain, API URL). It's gitignored. The flow:
+
+1. **First deploy** runs `terraform apply` and emits `aws-config.json` as a workflow artifact (`aws-config-json`).
+2. **Download that artifact**, copy its JSON contents, and paste into a new GitHub Actions secret named `AWS_CONFIG_JSON`.
+3. **From then on**, every PR's `web` and `playwright` job writes that secret to `web/src/aws-config.json` before building. PR builds use the same auth/api config as production.
+
+If the secret isn't set yet (very first PR before deploy), CI falls back to the placeholder values in `web/src/aws-config.example.json` — the build still passes, but the resulting bundle won't authenticate against a real Cognito.
+
+When you re-run terraform and it changes any output (e.g. you bound a custom domain), repeat step 2 to refresh the secret.
 
 ### 4. Remote Terraform state (optional but recommended)
 

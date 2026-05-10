@@ -1,0 +1,7 @@
+{
+  "region": "us-east-1",
+  "userPoolId": "PLACEHOLDER_USER_POOL_ID",
+  "userPoolClientId": "PLACEHOLDER_CLIENT_ID",
+  "hostedUiDomain": "placeholder",
+  "apiUrl": "https://placeholder.execute-api.us-east-1.amazonaws.com"
+}
