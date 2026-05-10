@@ -2,7 +2,8 @@
 # Bootstraps the one-time AWS resources Terraform expects to find:
 #   - GitHub Actions OIDC identity provider
 #   - IAM role for GitHub Actions to assume (printed at end → save as AWS_ROLE_ARN secret)
-#   - (optional) S3 bucket + DynamoDB lock table for terraform remote state
+#   - (optional) S3 bucket for terraform remote state (locking via S3-native
+#     use_lockfile — no DynamoDB needed)
 #
 # Run this ONCE per AWS account, with credentials that have IAM admin.
 #
@@ -139,20 +140,9 @@ if [[ "${SKIP_REMOTE_STATE:-0}" != "1" ]]; then
     echo "✓ Versioning + SSE + public-access block on $STATE_BUCKET"
   fi
 
-  if aws dynamodb describe-table --table-name "$LOCK_TABLE" --region "$AWS_REGION" >/dev/null 2>&1; then
-    echo "✓ Lock table exists: $LOCK_TABLE"
-  else
-    echo "→ Creating lock table: $LOCK_TABLE"
-    aws dynamodb create-table \
-      --table-name "$LOCK_TABLE" \
-      --attribute-definitions AttributeName=LockID,AttributeType=S \
-      --key-schema AttributeName=LockID,KeyType=HASH \
-      --billing-mode PAY_PER_REQUEST \
-      --region "$AWS_REGION" \
-      >/dev/null
-    aws dynamodb wait table-exists --table-name "$LOCK_TABLE" --region "$AWS_REGION"
-    echo "✓ Lock table ready"
-  fi
+  # NOTE: terraform's S3 backend now uses native locking via `use_lockfile`,
+  # so we no longer create a DynamoDB lock table. If you have an old one
+  # from a previous bootstrap, you can delete it manually.
 fi
 
 # ───────────────────────────────────────────────────────── 4. Summary
@@ -163,10 +153,10 @@ echo
 echo "  $ROLE_ARN"
 echo
 if [[ "${SKIP_REMOTE_STATE:-0}" != "1" ]]; then
-  echo "Then uncomment infra/backend.tf with:"
-  echo "  bucket         = \"$STATE_BUCKET\""
-  echo "  dynamodb_table = \"$LOCK_TABLE\""
-  echo "  region         = \"$AWS_REGION\""
+  echo "Then point infra/backend.tf at this bucket:"
+  echo "  bucket       = \"$STATE_BUCKET\""
+  echo "  region       = \"$AWS_REGION\""
+  echo "  use_lockfile = true"
   echo "and run: cd infra && terraform init -migrate-state"
 fi
 echo "════════════════════════════════════════════════════════════"

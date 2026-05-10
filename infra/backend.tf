@@ -1,13 +1,11 @@
-# Remote state — bootstrapped once before first apply.
-# Uncomment after creating the S3 bucket + DynamoDB lock table out-of-band
-# (see scripts/bootstrap-tf-backend.sh, written in Phase 3).
-#
-# terraform {
-#   backend "s3" {
-#     bucket         = "costco-roadtrip-tfstate"
-#     key            = "env/dev/terraform.tfstate"
-#     region         = "us-east-1"
-#     dynamodb_table = "costco-roadtrip-tflock"
-#     encrypt        = true
-#   }
-# }
+# Remote state — S3 bucket + native S3 locking (use_lockfile, replaces the
+# old DynamoDB lock table). Created by scripts/bootstrap-aws.sh.
+terraform {
+  backend "s3" {
+    bucket       = "costco-roadtrip-tfstate-047126042882"
+    key          = "env/dev/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true
+  }
+}
