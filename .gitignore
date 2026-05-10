@@ -134,3 +134,25 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars.local
+crash.log
+crash.*.log
+
+# Build artifacts
+web/dist/
+infra/lambdas/**/*.zip
+infra/lambdas/**/dist/
+
+# Local AWS config emitted by terraform
+web/src/aws-config.json
+web/src/aws-config.local.json
+
+# Playwright
+web/playwright-report/
+web/test-results/
+web/blob-report/
