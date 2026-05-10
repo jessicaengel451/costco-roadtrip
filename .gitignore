@@ -134,3 +134,34 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars.local
+crash.log
+crash.*.log
+
+# Build artifacts
+web/dist/
+infra/lambdas/**/*.zip
+infra/lambdas/**/dist/
+
+# Local AWS config emitted by terraform
+web/src/aws-config.json
+web/src/aws-config.local.json
+
+# Playwright
+web/playwright-report/
+web/test-results/
+web/blob-report/
+
+# Claude Code — local-only files; launch.json IS committed
+.claude/settings.local.json
+.claude/.session*
+
+# Amplify CLI sandbox outputs (we don't use Amplify Gen2 backend; these would
+# overwrite the Terraform-managed config)
+amplify_outputs.json
+amplify_outputs*.json
