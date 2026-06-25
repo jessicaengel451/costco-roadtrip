@@ -23,7 +23,7 @@
     "aws-amplify": "^6",
     "leaflet": "^1.9.4",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19.2.7",
     "react-leaflet": "^4.2.1"
   },
   "devDependencies": {
@@ -33,7 +33,7 @@
     "@types/leaflet": "^1.9.21",
     "@types/node": "^22",
     "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.4",
     "jsdom": "^29.1.1",
     "msw": "^2.14.5",
