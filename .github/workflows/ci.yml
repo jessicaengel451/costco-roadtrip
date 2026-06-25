@@ -30,7 +30,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
       - name: Write aws-config.json from secret
-        if: ${{ secrets.AWS_CONFIG_JSON != '' }}
         run: echo '${{ secrets.AWS_CONFIG_JSON }}' > src/aws-config.json
       - run: npm ci
       - run: npx tsc -b
@@ -77,7 +76,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
       - name: Write aws-config.json from secret
-        if: ${{ secrets.AWS_CONFIG_JSON != '' }}
         run: echo '${{ secrets.AWS_CONFIG_JSON }}' > src/aws-config.json
       - run: npm ci
       - run: npx playwright install --with-deps chromium webkit
