@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8",
-    "@types/node": "^22",
+    "@types/node": "^26",
     "aws-sdk-client-mock": "^4",
     "esbuild": "^0.24",
     "typescript": "^5",
