@@ -9,6 +9,12 @@ vi.mock('../auth/session', () => ({
 
 const API = 'https://placeholder.execute-api.us-east-1.amazonaws.com'
 
+// aws-config.json varies by environment (CI injects real values), so pin
+// apiUrl to keep the MSW handlers deterministic.
+vi.mock('../auth/amplify', () => ({
+  awsConfig: { apiUrl: 'https://placeholder.execute-api.us-east-1.amazonaws.com' },
+}))
+
 const server = setupServer()
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
