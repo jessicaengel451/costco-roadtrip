@@ -111,7 +111,7 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.0
+          terraform_version: 1.10.5
 
       - run: terraform fmt -recursive -check
       - run: terraform init
@@ -164,7 +164,7 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.0
+          terraform_version: 1.10.5
 
       - run: terraform init
       - run: terraform apply -auto-approve -var-file=envs/dev.tfvars
